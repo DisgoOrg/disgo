@@ -24,16 +24,21 @@ type UserTypingEvent struct {
 }
 
 // Channel returns the api.Channel the api.User started typing in
-func (e *UserTypingEvent) Channel() *api.Channel {
+func (e *UserTypingEvent) Channel() api.Channel {
 	return e.Disgo().Cache().Channel(e.ChannelID)
 }
 
+// MessageChannel returns the api.MessageChannel the api.User started typing in
+func (e UserTypingEvent) MessageChannel() api.MessageChannel {
+	return e.Disgo().Cache().MessageChannel(e.ChannelID)
+}
+
 // DMChannel returns the api.DMChannel the api.User started typing in
-func (e *UserTypingEvent) DMChannel() *api.DMChannel {
+func (e *UserTypingEvent) DMChannel() api.DMChannel {
 	return e.Disgo().Cache().DMChannel(e.ChannelID)
 }
 
 // TextChannel returns the api.TextChannel the api.User started typing in
-func (e *UserTypingEvent) TextChannel() *api.TextChannel {
+func (e *UserTypingEvent) TextChannel() api.TextChannel {
 	return e.Disgo().Cache().TextChannel(e.ChannelID)
 }

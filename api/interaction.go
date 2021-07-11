@@ -86,7 +86,7 @@ func (i *Interaction) Respond(responseType InteractionResponseType, data interfa
 		return nil
 	}
 
-	return i.Disgo.RestClient().SendInteractionResponse(i.ID, i.Token, response)
+	return i.Disgo.RestClient().CreateInteractionResponse(i.ID, i.Token, response)
 }
 
 // DeferReply replies to the api.Interaction with api.InteractionResponseTypeDeferredChannelMessageWithSource and shows a loading state
@@ -115,7 +115,7 @@ func (i *Interaction) DeleteOriginal() restclient.RestError {
 
 // SendFollowup used to send a api.MessageCreate to an api.Interaction
 func (i *Interaction) SendFollowup(messageCreate MessageCreate) (*Message, restclient.RestError) {
-	return i.Disgo.RestClient().SendFollowupMessage(i.Disgo.ApplicationID(), i.Token, messageCreate)
+	return i.Disgo.RestClient().CreateFollowupMessage(i.Disgo.ApplicationID(), i.Token, messageCreate)
 }
 
 // EditFollowup used to edit a api.Message from an api.Interaction
@@ -142,7 +142,7 @@ func (i *Interaction) Guild() *Guild {
 }
 
 // DMChannel returns the api.DMChannel from the api.Cache
-func (i *Interaction) DMChannel() *DMChannel {
+func (i *Interaction) DMChannel() DMChannel {
 	if i.ChannelID == nil {
 		return nil
 	}
@@ -150,7 +150,7 @@ func (i *Interaction) DMChannel() *DMChannel {
 }
 
 // MessageChannel returns the api.MessageChannel from the api.Cache
-func (i *Interaction) MessageChannel() *MessageChannel {
+func (i *Interaction) MessageChannel() MessageChannel {
 	if i.ChannelID == nil {
 		return nil
 	}
@@ -158,7 +158,7 @@ func (i *Interaction) MessageChannel() *MessageChannel {
 }
 
 // TextChannel returns the api.TextChannel from the api.Cache
-func (i *Interaction) TextChannel() *TextChannel {
+func (i *Interaction) TextChannel() TextChannel {
 	if i.ChannelID == nil {
 		return nil
 	}
@@ -166,7 +166,7 @@ func (i *Interaction) TextChannel() *TextChannel {
 }
 
 // GuildChannel returns the api.GuildChannel from the api.Cache
-func (i *Interaction) GuildChannel() *GuildChannel {
+func (i *Interaction) GuildChannel() GuildChannel {
 	if i.ChannelID == nil {
 		return nil
 	}

@@ -39,13 +39,13 @@ const (
 	VerificationLevelVeryHigh
 )
 
-// MessageNotifications indicates whether users receive @ mentions on a new message
-type MessageNotifications int
+// MessageNotificationLevel indicates whether users receive @ mentions on a new message
+type MessageNotificationLevel int
 
 // Constants for MessageNotifications
 const (
-	MessageNotificationsAllMessages MessageNotifications = iota
-	MessageNotificationsOnlyMentions
+	MessageNotificationLevelAllMessages MessageNotificationLevel = iota
+	MessageNotificationLevelOnlyMentions
 )
 
 // The ExplicitContentFilterLevel of a Guild
@@ -105,6 +105,7 @@ type GuildWelcomeChannel struct {
 
 // GuildPreview is used for previewing public Guild(s) before joining them
 type GuildPreview struct {
+	Disgo                    Disgo
 	ID                       Snowflake      `json:"id"`
 	Name                     string         `json:"name"`
 	Icon                     *string        `json:"icon"`
@@ -120,11 +121,12 @@ type GuildPreview struct {
 // FullGuild represents a Guild objects sent by discord with the GatewayEventGuildCreate
 type FullGuild struct {
 	*Guild
-	Roles       []*Role       `json:"roles"`
-	Emojis      []*Emoji      `json:"emojis"`
-	Members     []*Member     `json:"members"`
-	Channels    []*Channel    `json:"channels"`
-	VoiceStates []*VoiceState `json:"voice_states"`
+	Roles       []*Role        `json:"roles"`
+	Emojis      []*Emoji       `json:"emojis"`
+	Members     []*Member      `json:"members"`
+	Channels    []*ChannelImpl `json:"channels"`
+	Threads     []*ChannelImpl `json:"threads"`
+	VoiceStates []*VoiceState  `json:"voice_states"`
 	//Presences   []*Presence     `json:"presences"`
 }
 
@@ -145,7 +147,7 @@ type Guild struct {
 	MemberCount                 *int                       `json:"member_count"`
 	VerificationLevel           VerificationLevel          `json:"verification_level"`
 	Large                       *bool                      `json:"large"`
-	DefaultMessageNotifications MessageNotifications       `json:"default_message_notifications"`
+	DefaultMessageNotifications MessageNotificationLevel   `json:"default_message_notifications"`
 	MaxPresences                *int                       `json:"max_presences"`
 	MaxMembers                  *int                       `json:"max_members"`
 	Unavailable                 bool                       `json:"unavailable"`
@@ -192,8 +194,8 @@ func (g *Guild) Disconnect() error {
 }
 
 // Update updates the current Guild
-func (g *Guild) Update(updateGuild UpdateGuild) (*Guild, restclient.RestError) {
-	return g.Disgo.RestClient().UpdateGuild(g.ID, updateGuild)
+func (g *Guild) Update(guildUpdate GuildUpdate) (*Guild, restclient.RestError) {
+	return g.Disgo.RestClient().UpdateGuild(g.ID, guildUpdate)
 }
 
 // Delete deletes the current Guild
@@ -202,13 +204,13 @@ func (g *Guild) Delete() restclient.RestError {
 }
 
 // CreateRole allows you to create a new Role
-func (g *Guild) CreateRole(createRole CreateRole) (*Role, restclient.RestError) {
-	return g.Disgo.RestClient().CreateRole(g.ID, createRole)
+func (g *Guild) CreateRole(roleCreate RoleCreate) (*Role, restclient.RestError) {
+	return g.Disgo.RestClient().CreateRole(g.ID, roleCreate)
 }
 
 // UpdateRole allows you to update a Role
-func (g *Guild) UpdateRole(roleID Snowflake, role UpdateRole) (*Role, restclient.RestError) {
-	return g.Disgo.RestClient().UpdateRole(g.ID, roleID, role)
+func (g *Guild) UpdateRole(roleID Snowflake, roleUpdate RoleUpdate) (*Role, restclient.RestError) {
+	return g.Disgo.RestClient().UpdateRole(g.ID, roleID, roleUpdate)
 }
 
 // DeleteRole allows you to delete a Role
@@ -227,13 +229,13 @@ func (g *Guild) GetMember(userID Snowflake) *Member {
 }
 
 // AddMember adds a member to the Guild with the oauth2 access token
-func (g *Guild) AddMember(userID Snowflake, addMember AddMember) (*Member, restclient.RestError) {
-	return g.Disgo.RestClient().AddMember(g.ID, userID, addMember)
+func (g *Guild) AddMember(userID Snowflake, memberAdd MemberAdd) (*Member, restclient.RestError) {
+	return g.Disgo.RestClient().AddMember(g.ID, userID, memberAdd)
 }
 
 // UpdateMember updates an existing member of the Guild
-func (g *Guild) UpdateMember(userID Snowflake, updateMember UpdateMember) (*Member, restclient.RestError) {
-	return g.Disgo.RestClient().UpdateMember(g.ID, userID, updateMember)
+func (g *Guild) UpdateMember(userID Snowflake, memebrUpdate MemberUpdate) (*Member, restclient.RestError) {
+	return g.Disgo.RestClient().UpdateMember(g.ID, userID, memebrUpdate)
 }
 
 // KickMember kicks an existing member from the Guild
@@ -344,41 +346,51 @@ type PartialGuild struct {
 	Features    []GuildFeature `json:"features"`
 }
 
-// CreateGuild is the payload used to create a Guild
-type CreateGuild struct {
+// GuildCreate is the payload used to create a Guild
+type GuildCreate struct {
 	Name                            string                     `json:"name"`
 	Region                          string                     `json:"region,omitempty"`
 	Icon                            string                     `json:"icon,omitempty"`
 	VerificationLevel               VerificationLevel          `json:"verification_level,omitempty"`
-	DefaultMessageNotificationLevel MessageNotifications       `json:"default_message_notification_level"`
+	DefaultMessageNotificationLevel MessageNotificationLevel   `json:"default_message_notification_level"`
 	ExplicitContentFilterLevel      ExplicitContentFilterLevel `json:"explicit_content_filter_level"`
-	Roles                           []CreateRole               `json:"roles,omitempty"`
-	Channels                        []interface{}              `json:"channels,omitempty"`
+	Roles                           []RoleCreate               `json:"roles,omitempty"`
+	Channels                        []GuildChannelCreate       `json:"channels,omitempty"`
 	AFKChannelID                    Snowflake                  `json:"afk_channel_id,omitempty"`
 	AFKTimeout                      int                        `json:"afk_timeout,omitempty"`
 	SystemChannelID                 Snowflake                  `json:"system_channel_id,omitempty"`
 	SystemChannelFlags              SystemChannelFlag          `json:"system_channel_flags,omitempty"`
 }
 
-// UpdateGuild is the payload used to update a Guild
-type UpdateGuild struct {
-	Name                            *string                     `json:"name,omitempty"`
-	Region                          *string                     `json:"region,omitempty"`
-	VerificationLevel               *VerificationLevel          `json:"verification_level,omitempty"`
-	DefaultMessageNotificationLevel *MessageNotifications       `json:"default_message_notification_level,omitempty"`
-	ExplicitContentFilterLevel      *ExplicitContentFilterLevel `json:"explicit_content_filter_level,omitempty"`
-	AFKChannelID                    *Snowflake                  `json:"afk_channel_id,omitempty"`
-	AFKTimeout                      *int                        `json:"afk_timeout,omitempty"`
-	Icon                            *string                     `json:"icon,omitempty"`
-	OwnerID                         *Snowflake                  `json:"owner_id,omitempty"`
-	Splash                          []byte                      `json:"splash,omitempty"`
-	DiscoverySplash                 []byte                      `json:"discovery_splash,omitempty"`
-	Banner                          []byte                      `json:"banner,omitempty"`
-	SystemChannelID                 *Snowflake                  `json:"system_channel_id,omitempty"`
-	SystemChannelFlags              *SystemChannelFlag          `json:"system_channel_flags,omitempty"`
-	RulesChannelID                  *Snowflake                  `json:"rules_channel_id,omitempty"`
-	PublicUpdatesChannelID          *Snowflake                  `json:"public_updates_channel_id,omitempty"`
-	PreferredLocale                 *string                     `json:"preferred_locale,omitempty"`
-	Features                        *[]GuildFeature             `json:"features,omitempty"`
-	Description                     *string                     `json:"description,omitempty"`
+type GuildChannelCreate struct {
+	ID       Snowflake   `json:"id,omitempty"`
+	Name     string      `json:"name"`
+	Type     ChannelType `json:"type"`
+	ParentID Snowflake   `json:"parent_id,omitempty"`
+}
+
+type GuildUpdate struct {
+	Name                            *string                      `json:"name"`
+	Region                          *string                     `json:"region"`
+	VerificationLevel               *VerificationLevel          `json:"verification_level"`
+	DefaultMessageNotificationLevel *MessageNotificationLevel   `json:"default_message_notification_level"`
+	ExplicitContentFilterLevel      *ExplicitContentFilterLevel `json:"explicit_content_filter_level"`
+	AFKChannelID                    *Snowflake                  `json:"afk_channel_id"`
+	AFKTimeout                      *int                         `json:"afk_timeout"`
+	Icon                            *string                     `json:"icon"`
+	OwnerID                         Snowflake                   `json:"owner_id"`
+	Splash                          []byte                 `json:"splash"`
+	DiscoverySplash                 []byte                 `json:"discovery_splash"`
+	Banner                          []byte                 `json:"banner"`
+	SystemChannelID                 *Snowflake                  `json:"system_channel_id"`
+	SystemChannelFlags              *SystemChannelFlag          `json:"system_channel_flags"`
+	RulesChannelID                  *Snowflake                  `json:"rules_channel_id"`
+	PublicUpdatesChannelID          *Snowflake                  `json:"public_updates_channel_id"`
+	PreferredLocale                 *string                     `json:"preferred_locale"`
+	Features                        []GuildFeature              `json:"features"`
+	Description                     *string                     `json:"description"`
+}
+
+type PruneCount struct {
+	Pruned int `json:"pruned"`
 }

@@ -66,8 +66,8 @@ func (m *Member) IsOwner() bool {
 }
 
 // Update updates the Member
-func (m *Member) Update(updateGuildMember UpdateMember) (*Member, restclient.RestError) {
-	return m.Disgo.RestClient().UpdateMember(m.GuildID, m.User.ID, updateGuildMember)
+func (m *Member) Update(memberUpdate MemberUpdate) (*Member, restclient.RestError) {
+	return m.Disgo.RestClient().UpdateMember(m.GuildID, m.User.ID, memberUpdate)
 }
 
 // Kick kicks the Member from the Guild
@@ -90,8 +90,8 @@ func (m *Member) RemoveRole(roleID Snowflake) restclient.RestError {
 	return m.Disgo.RestClient().AddMemberRole(m.GuildID, m.User.ID, roleID)
 }
 
-// AddMember is used to add a member via the oauth2 access token to a guild
-type AddMember struct {
+// MemberAdd is used to add a Member via the oauth2 access token to a Guild
+type MemberAdd struct {
 	AccessToken string      `json:"access_token"`
 	Nick        string      `json:"nick,omitempty"`
 	Roles       []Snowflake `json:"roles,omitempty"`
@@ -99,17 +99,17 @@ type AddMember struct {
 	Deaf        bool        `json:"deaf,omitempty"`
 }
 
-// UpdateMember is used to modify
-type UpdateMember struct {
-	*MoveMember
+// MemberUpdate is used to modify a Member
+type MemberUpdate struct {
+	*MemberMove
 	Nick  *string     `json:"nick,omitempty"`
 	Roles []Snowflake `json:"roles,omitempty"`
 	Mute  *bool       `json:"mute,omitempty"`
 	Deaf  *bool       `json:"deaf,omitempty"`
 }
 
-// MoveMember is used to move a member
-type MoveMember struct {
+// MemberMove is used to move a member
+type MemberMove struct {
 	ChannelID *Snowflake `json:"channel_id,omitempty"`
 }
 

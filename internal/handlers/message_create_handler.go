@@ -29,9 +29,7 @@ func (h *MessageCreateHandler) HandleGatewayEvent(disgo api.Disgo, eventManager 
 
 	genericMessageEvent := &events.GenericMessageEvent{
 		GenericEvent: events.NewGenericEvent(disgo, sequenceNumber),
-		MessageID:    message.ID,
 		Message:      message,
-		ChannelID:    message.ChannelID,
 	}
 
 	eventManager.Dispatch(&events.MessageCreateEvent{

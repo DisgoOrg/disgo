@@ -17,9 +17,9 @@ import (
 	"github.com/DisgoOrg/disgo/api/events"
 )
 
-const red = 16711680
-const orange = 16562691
-const green = 65280
+const red = 0xdb1222
+const orange = 0xff7700
+const green = 0x00fc00
 
 var token = os.Getenv("token")
 var guildID = api.Snowflake(os.Getenv("guild_id"))
@@ -39,9 +39,9 @@ func main() {
 		SetLogger(logger).
 		SetRawGatewayEventsEnabled(true).
 		SetHTTPClient(client).
-		SetGatewayIntents(api.GatewayIntentGuilds, api.GatewayIntentGuildMessages, api.GatewayIntentGuildMembers).
+		SetGatewayIntents(api.GatewayIntentsNonPrivileged | api.GatewayIntentGuildMembers).
 		SetMemberCachePolicy(api.MemberCachePolicyAll).
-		AddEventListeners(&events.ListenerAdapter{
+		AddEventListeners(events.ListenerAdapter{
 			OnRawGateway:         rawGatewayEventListener,
 			OnGuildAvailable:     guildAvailListener,
 			OnGuildMessageCreate: messageListener,
@@ -352,7 +352,7 @@ func messageListener(event *events.GuildMessageCreateEvent) {
 
 	case "test":
 		go func() {
-			message, err := event.MessageChannel().SendMessage(api.NewMessageCreateBuilder().SetContent("test").Build())
+			message, err := event.MessageChannel().CreateMessage(api.NewMessageCreateBuilder().SetContent("test").Build())
 			if err != nil {
 				logger.Errorf("error while sending file: %s", err)
 				return
@@ -369,12 +369,12 @@ func messageListener(event *events.GuildMessageCreateEvent) {
 
 	case "dm":
 		go func() {
-			channel, err := event.Message.Author.OpenDMChannel()
+			channel, err := event.Message.Author.CreateDMChannel()
 			if err != nil {
 				_ = event.Message.AddReaction("❌")
 				return
 			}
-			_, err = channel.SendMessage(api.NewMessageCreateBuilder().SetContent("helo").Build())
+			_, err = channel.CreateMessage(api.NewMessageCreateBuilder().SetContent("helo").Build())
 			if err == nil {
 				_ = event.Message.AddReaction("✅")
 			} else {

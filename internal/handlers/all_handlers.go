@@ -15,6 +15,13 @@ func GetAllHandlers() []api.EventHandler {
 		&ChannelDeleteHandler{},
 		&ChannelUpdateHandler{},
 
+		&ThreadCreateHandler{},
+		&ThreadDeleteHandler{},
+		&ThreadUpdateHandler{},
+		&ThreadListSyncHandler{},
+		&ThreadMembersUpdateHandler{},
+		&ThreadMemberUpdateHandler{},
+
 		&GuildCreateHandler{},
 		&GuildDeleteHandler{},
 		&GuildUpdateHandler{},
@@ -33,8 +40,9 @@ func GetAllHandlers() []api.EventHandler {
 		&InteractionCreateWebhookHandler{},
 
 		&MessageCreateHandler{},
-		&MessageUpdateHandler{},
 		&MessageDeleteHandler{},
+		&MessageDeleteBulkHandler{},
+		&MessageUpdateHandler{},
 
 		&ReadyHandler{},
 

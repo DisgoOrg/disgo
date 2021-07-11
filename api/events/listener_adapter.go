@@ -34,11 +34,17 @@ type ListenerAdapter struct {
 	OnDMChannelUpdate func(event *DMChannelUpdateEvent)
 	OnDMChannelDelete func(event *DMChannelDeleteEvent)
 
+	// api.DMChannel api.Message Reaction Events
+	OnGenericDMMessageEvent func(event *GenericDMMessageEvent)
+	OnDMMessageCreate       func(event *DMMessageCreateEvent)
+	OnDMMessageUpdate       func(event *DMMessageUpdateEvent)
+	OnDMMessageDelete       func(event *DMMessageDeleteEvent)
+
 	// api.DMChannel Reaction Events
-	OnDMMessageReactionAdd         func(event *DMMessageReactionAddEvent)
-	OnDMMessageReactionRemove      func(event *DMMessageReactionRemoveEvent)
-	OnDMMessageReactionRemoveEmoji func(event *DMMessageReactionRemoveEmojiEvent)
-	OnDMMessageReactionRemoveAll   func(event *DMMessageReactionRemoveAllEvent)
+	OnDMMessageReactionAdd              func(event *DMMessageReactionAddEvent)
+	OnDMMessageReactionRemove           func(event *DMMessageReactionRemoveEvent)
+	OnDMMessageReactionRemoveEmoji      func(event *DMMessageReactionRemoveEmojiEvent)
+	OnDMMessageReactionRemoveAll        func(event *DMMessageReactionRemoveAllEvent)
 
 	// api.StoreChannel Events
 	OnStoreChannelCreate func(event *StoreChannelCreateEvent)
@@ -91,10 +97,10 @@ type ListenerAdapter struct {
 	OnGuildMessageDelete func(event *GuildMessageDeleteEvent)
 
 	// api.Guild api.Message Reaction Events
-	OnGuildMessageReactionAdd         func(event *GuildMessageReactionAddEvent)
-	OnGuildMessageReactionRemove      func(event *GuildMessageReactionRemoveEvent)
-	OnGuildMessageReactionRemoveEmoji func(event *GuildMessageReactionRemoveEmojiEvent)
-	OnGuildMessageReactionRemoveAll   func(event *GuildMessageReactionRemoveAllEvent)
+	OnGuildMessageReactionAdd              func(event *GuildMessageReactionAddEvent)
+	OnGuildMessageReactionRemove           func(event *GuildMessageReactionRemoveEvent)
+	OnGuildMessageReactionRemoveEmoji      func(event *GuildMessageReactionRemoveEmojiEvent)
+	OnGuildMessageReactionRemoveAll        func(event *GuildMessageReactionRemoveAllEvent)
 
 	// api.Guild Voice Events
 	OnGuildVoiceUpdate func(event *GuildVoiceUpdateEvent)
@@ -117,10 +123,10 @@ type ListenerAdapter struct {
 	OnMessageDelete func(event *MessageDeleteEvent)
 
 	// api.Message Reaction Events
-	OnMessageReactionAdd         func(event *MessageReactionAddEvent)
-	OnMessageReactionRemove      func(event *MessageReactionRemoveEvent)
-	OnMessageReactionRemoveEmoji func(event *MessageReactionRemoveEmojiEvent)
-	OnMessageReactionRemoveAll   func(event *MessageReactionRemoveAllEvent)
+	OnMessageReactionAdd              func(event *MessageReactionAddEvent)
+	OnMessageReactionRemove           func(event *MessageReactionRemoveEvent)
+	OnMessageReactionRemoveEmoji      func(event *MessageReactionRemoveEmojiEvent)
+	OnMessageReactionRemoveAll        func(event *MessageReactionRemoveAllEvent)
 
 	// Self Events
 	OnSelfUpdate func(event *SelfUpdateEvent)
@@ -213,7 +219,21 @@ func (l ListenerAdapter) OnEvent(event interface{}) {
 			listener(e)
 		}
 
-	// api.DMChannel Events// api.Category Events
+	// api.DMChannel api.Message Events
+	case *DMMessageCreateEvent:
+		if listener := l.OnDMMessageCreate; listener != nil {
+			listener(e)
+		}
+	case *DMMessageUpdateEvent:
+		if listener := l.OnDMMessageUpdate; listener != nil {
+			listener(e)
+		}
+	case *DMMessageDeleteEvent:
+		if listener := l.OnDMMessageDelete; listener != nil {
+			listener(e)
+		}
+
+	// api.DMChannel api.Message Reaction Events
 	case *DMMessageReactionAddEvent:
 		if listener := l.OnDMMessageReactionAdd; listener != nil {
 			listener(e)

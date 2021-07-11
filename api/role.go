@@ -33,17 +33,17 @@ func (r *Role) Guild() *Guild {
 }
 
 // Update updates the Role with specific values
-func (r *Role) Update(roleUpdate UpdateRole) (*Role, restclient.RestError) {
+func (r *Role) Update(roleUpdate RoleUpdate) (*Role, restclient.RestError) {
 	return r.Disgo.RestClient().UpdateRole(r.GuildID, r.ID, roleUpdate)
 }
 
 // SetPosition sets the position of the Role
-func (r *Role) SetPosition(rolePositionUpdate UpdateRolePosition) ([]*Role, restclient.RestError) {
+func (r *Role) SetPosition(rolePositionUpdate RolePositionUpdate) ([]*Role, restclient.RestError) {
 	return r.Disgo.RestClient().UpdateRolePositions(r.GuildID, rolePositionUpdate)
 }
 
 // Delete deletes the Role
-func (r *Role) Delete() restclient.RestError {
+func (r *Role) Delete() error {
 	return r.Disgo.RestClient().DeleteRole(r.GuildID, r.ID)
 }
 
@@ -54,8 +54,8 @@ type RoleTag struct {
 	PremiumSubscriber bool       `json:"premium_subscriber"`
 }
 
-// CreateRole is the payload to create a Role
-type CreateRole struct {
+// RoleCreate is the payload to create a Role
+type RoleCreate struct {
 	Name        string      `json:"name,omitempty"`
 	Permissions Permissions `json:"permissions,omitempty"`
 	Color       int         `json:"color,omitempty"`
@@ -63,17 +63,17 @@ type CreateRole struct {
 	Mentionable bool        `json:"mentionable,omitempty"`
 }
 
-// UpdateRole is the payload to update a Role
-type UpdateRole struct {
-	Name        *string      `json:"name"`
-	Permissions *Permissions `json:"permissions"`
-	Color       *int         `json:"color"`
-	Hoist       *bool        `json:"hoist"`
-	Mentionable *bool        `json:"mentionable"`
+// RoleUpdate is the payload to update a Role
+type RoleUpdate struct {
+	Name        *string      `json:"name,omitempty"`
+	Permissions *Permissions `json:"permissions,omitempty"`
+	Color       *int         `json:"color,omitempty"`
+	Hoist       *bool        `json:"hoist,omitempty"`
+	Mentionable *bool        `json:"mentionable,omitempty"`
 }
 
-// UpdateRolePosition is the payload to update a Role(s) position
-type UpdateRolePosition struct {
+// RolePositionUpdate is the payload to update a Role(s) position
+type RolePositionUpdate struct {
 	ID       Snowflake `json:"id"`
 	Position *int      `json:"position"`
 }

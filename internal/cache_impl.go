@@ -8,26 +8,28 @@ import (
 	"github.com/DisgoOrg/disgo/api"
 )
 
-func newCacheImpl(disgo api.Disgo, memberCachePolicy api.MemberCachePolicy, messageCachePolicy api.MessageCachePolicy, cacheFlags api.CacheFlags) api.Cache {
+func newCacheImpl(disgo api.Disgo, memberCachePolicy api.MemberCachePolicy, threadMemberCachePolicy api.ThreadMemberCachePolicy, messageCachePolicy api.MessageCachePolicy, cacheFlags api.CacheFlags) api.Cache {
 	cache := &CacheImpl{
-		disgo:              disgo,
-		quit:               make(chan interface{}),
-		memberCachePolicy:  memberCachePolicy,
-		messageCachePolicy: messageCachePolicy,
-		cacheFlags:         cacheFlags,
-		globalCommands:     map[api.Snowflake]*api.Command{},
-		guildCommands:      map[api.Snowflake]map[api.Snowflake]*api.Command{},
-		users:              map[api.Snowflake]*api.User{},
-		guilds:             map[api.Snowflake]*api.Guild{},
-		members:            map[api.Snowflake]map[api.Snowflake]*api.Member{},
-		voiceStates:        map[api.Snowflake]map[api.Snowflake]*api.VoiceState{},
-		roles:              map[api.Snowflake]map[api.Snowflake]*api.Role{},
-		dmChannels:         map[api.Snowflake]*api.DMChannel{},
-		categories:         map[api.Snowflake]map[api.Snowflake]*api.Category{},
-		textChannels:       map[api.Snowflake]map[api.Snowflake]*api.TextChannel{},
-		voiceChannels:      map[api.Snowflake]map[api.Snowflake]*api.VoiceChannel{},
-		storeChannels:      map[api.Snowflake]map[api.Snowflake]*api.StoreChannel{},
-		emotes:             map[api.Snowflake]map[api.Snowflake]*api.Emoji{},
+		disgo:                   disgo,
+		quit:                    make(chan interface{}),
+		memberCachePolicy:       memberCachePolicy,
+		threadMemberCachePolicy: threadMemberCachePolicy,
+		messageCachePolicy:      messageCachePolicy,
+		cacheFlags:              cacheFlags,
+		globalCommands:          map[api.Snowflake]*api.Command{},
+		guildCommands:           map[api.Snowflake]map[api.Snowflake]*api.Command{},
+		users:                   map[api.Snowflake]*api.User{},
+		guilds:                  map[api.Snowflake]*api.Guild{},
+		members:                 map[api.Snowflake]map[api.Snowflake]*api.Member{},
+		threadMembers:           map[api.Snowflake]map[api.Snowflake]map[api.Snowflake]*api.ThreadMember{},
+		voiceStates:             map[api.Snowflake]map[api.Snowflake]*api.VoiceState{},
+		roles:                   map[api.Snowflake]map[api.Snowflake]*api.Role{},
+		dmChannels:              map[api.Snowflake]api.DMChannel{},
+		categories:              map[api.Snowflake]map[api.Snowflake]api.Category{},
+		textChannels:            map[api.Snowflake]map[api.Snowflake]api.TextChannel{},
+		voiceChannels:           map[api.Snowflake]map[api.Snowflake]api.VoiceChannel{},
+		storeChannels:           map[api.Snowflake]map[api.Snowflake]api.StoreChannel{},
+		emojis:                  map[api.Snowflake]map[api.Snowflake]*api.Emoji{},
 	}
 	go cache.startCleanup(10 * time.Second)
 	return cache
@@ -35,25 +37,28 @@ func newCacheImpl(disgo api.Disgo, memberCachePolicy api.MemberCachePolicy, mess
 
 // CacheImpl is used for api.Disgo's api.Cache
 type CacheImpl struct {
-	disgo              api.Disgo
-	quit               chan interface{}
-	memberCachePolicy  api.MemberCachePolicy
-	messageCachePolicy api.MessageCachePolicy
-	cacheFlags         api.CacheFlags
-	globalCommands     map[api.Snowflake]*api.Command
-	guildCommands      map[api.Snowflake]map[api.Snowflake]*api.Command
-	users              map[api.Snowflake]*api.User
-	guilds             map[api.Snowflake]*api.Guild
-	messages           map[api.Snowflake]map[api.Snowflake]*api.Message
-	members            map[api.Snowflake]map[api.Snowflake]*api.Member
-	voiceStates        map[api.Snowflake]map[api.Snowflake]*api.VoiceState
-	roles              map[api.Snowflake]map[api.Snowflake]*api.Role
-	dmChannels         map[api.Snowflake]*api.DMChannel
-	categories         map[api.Snowflake]map[api.Snowflake]*api.Category
-	textChannels       map[api.Snowflake]map[api.Snowflake]*api.TextChannel
-	voiceChannels      map[api.Snowflake]map[api.Snowflake]*api.VoiceChannel
-	storeChannels      map[api.Snowflake]map[api.Snowflake]*api.StoreChannel
-	emotes             map[api.Snowflake]map[api.Snowflake]*api.Emoji
+	disgo                   api.Disgo
+	quit                    chan interface{}
+	memberCachePolicy       api.MemberCachePolicy
+	threadMemberCachePolicy api.ThreadMemberCachePolicy
+	messageCachePolicy      api.MessageCachePolicy
+	cacheFlags              api.CacheFlags
+	globalCommands          map[api.Snowflake]*api.Command
+	guildCommands           map[api.Snowflake]map[api.Snowflake]*api.Command
+	users                   map[api.Snowflake]*api.User
+	guilds                  map[api.Snowflake]*api.Guild
+	messages                map[api.Snowflake]map[api.Snowflake]*api.Message
+	members                 map[api.Snowflake]map[api.Snowflake]*api.Member
+	threadMembers           map[api.Snowflake]map[api.Snowflake]map[api.Snowflake]*api.ThreadMember
+	voiceStates             map[api.Snowflake]map[api.Snowflake]*api.VoiceState
+	roles                   map[api.Snowflake]map[api.Snowflake]*api.Role
+	dmChannels              map[api.Snowflake]api.DMChannel
+	categories              map[api.Snowflake]map[api.Snowflake]api.Category
+	textChannels            map[api.Snowflake]map[api.Snowflake]api.TextChannel
+	threads                 map[api.Snowflake]map[api.Snowflake]api.Thread
+	voiceChannels           map[api.Snowflake]map[api.Snowflake]api.VoiceChannel
+	storeChannels           map[api.Snowflake]map[api.Snowflake]api.StoreChannel
+	emojis                  map[api.Snowflake]map[api.Snowflake]*api.Emoji
 }
 
 // Disgo returns the current api.Disgo instance
@@ -307,10 +312,10 @@ func (c *CacheImpl) CacheGuild(guild *api.Guild) *api.Guild {
 	c.members[guild.ID] = map[api.Snowflake]*api.Member{}
 	c.voiceStates[guild.ID] = map[api.Snowflake]*api.VoiceState{}
 	c.roles[guild.ID] = map[api.Snowflake]*api.Role{}
-	c.categories[guild.ID] = map[api.Snowflake]*api.Category{}
-	c.textChannels[guild.ID] = map[api.Snowflake]*api.TextChannel{}
-	c.voiceChannels[guild.ID] = map[api.Snowflake]*api.VoiceChannel{}
-	c.storeChannels[guild.ID] = map[api.Snowflake]*api.StoreChannel{}
+	c.categories[guild.ID] = map[api.Snowflake]api.Category{}
+	c.textChannels[guild.ID] = map[api.Snowflake]api.TextChannel{}
+	c.voiceChannels[guild.ID] = map[api.Snowflake]api.VoiceChannel{}
+	c.storeChannels[guild.ID] = map[api.Snowflake]api.StoreChannel{}
 	return guild
 }
 
@@ -507,7 +512,6 @@ func (c *CacheImpl) UncacheMember(guildID api.Snowflake, userID api.Snowflake) {
 			}
 		}
 	}
-
 }
 
 // FindMember allows you to find a member in a guild by custom method
@@ -529,6 +533,77 @@ func (c *CacheImpl) FindMembers(guildID api.Snowflake, check func(u *api.Member)
 		}
 	}
 	return members
+}
+
+// ThreadMember returns a api.ThreadMember from api.Cache by guild ID and thread ID
+func (c *CacheImpl) ThreadMember(guildID api.Snowflake, threadID api.Snowflake, userID api.Snowflake) *api.ThreadMember {
+	if guildThreadMembers, ok := c.threadMembers[guildID]; ok {
+		if threadMembers, ok := guildThreadMembers[threadID]; ok {
+			return threadMembers[userID]
+		}
+	}
+	return nil
+}
+
+func (c *CacheImpl) ThreadMembers(guildID api.Snowflake, threadID api.Snowflake) []*api.ThreadMember {
+	if guildThreadMembers, ok := c.threadMembers[guildID]; ok {
+		if threadMembers, ok := guildThreadMembers[threadID]; ok {
+			members := make([]*api.ThreadMember, len(threadMembers))
+			i := 0
+			for _, member := range threadMembers {
+				members[i] = member
+				i++
+			}
+			return members
+		}
+	}
+	return nil
+}
+
+func (c *CacheImpl) ThreadMemberCache(guildID api.Snowflake) map[api.Snowflake]map[api.Snowflake]*api.ThreadMember {
+	if guildThreadMembers, ok := c.threadMembers[guildID]; ok {
+		return guildThreadMembers
+	}
+	return nil
+}
+
+func (c *CacheImpl) AllThreadMemberCache() map[api.Snowflake]map[api.Snowflake]map[api.Snowflake]*api.ThreadMember {
+	return c.threadMembers
+}
+
+func (c *CacheImpl) CacheThreadMember(member *api.ThreadMember) *api.ThreadMember {
+	// only cache member if we want to & always cache self ThreadMember!
+	if !c.threadMemberCachePolicy(member) && member.UserID != member.Disgo.ApplicationID() {
+		return member
+	}
+	if guildThreadMembers, ok := c.threadMembers[member.GuildID]; ok {
+		if threadMembers, ok := guildThreadMembers[member.ThreadID]; ok {
+			if threadMember, ok := threadMembers[member.UserID]; ok {
+				*threadMember = *member
+				return threadMember
+			}
+			threadMembers[member.UserID] = member
+		}
+	}
+	return member
+}
+func (c *CacheImpl) UncacheThreadMember(guildID api.Snowflake, threadID api.Snowflake, userID api.Snowflake) {
+	// TODO: add UncacheUser call?
+	if guildThreadMembers, ok := c.threadMembers[guildID]; ok {
+		if threadMembers, ok := guildThreadMembers[threadID]; ok {
+			if threadMember, ok := threadMembers[userID]; ok {
+				// check if we really want to uncache that member according to our policy
+				if !c.threadMemberCachePolicy(threadMember) {
+					delete(threadMembers, userID)
+				}
+			}
+		}
+	}
+}
+
+// UncacheThreadMembers removes all ThreadsMembers for a Guild from the Cache
+func (c *CacheImpl) UncacheThreadMembers(guildID api.Snowflake) {
+	delete(c.threadMembers, guildID)
 }
 
 // VoiceState returns a Member's api.VoiceState for a api.Guild
@@ -683,72 +758,84 @@ func (c *CacheImpl) FindRoles(guildID api.Snowflake, check func(u *api.Role) boo
 }
 
 // Channel returns a channel from any channel cache by ID
-func (c *CacheImpl) Channel(channelID api.Snowflake) *api.Channel {
+func (c *CacheImpl) Channel(channelID api.Snowflake) api.Channel {
 	dmChannel := c.DMChannel(channelID)
 	if dmChannel != nil {
-		return &dmChannel.Channel
+		return dmChannel
 	}
 	category := c.Category(channelID)
 	if category != nil {
-		return &category.Channel
+		return category
 	}
 	textChannel := c.TextChannel(channelID)
 	if textChannel != nil {
-		return &textChannel.MessageChannel.Channel
+		return textChannel
 	}
 	voiceChannel := c.VoiceChannel(channelID)
 	if voiceChannel != nil {
-		return &voiceChannel.Channel
+		return voiceChannel
 	}
 	storeChannel := c.StoreChannel(channelID)
 	if storeChannel != nil {
-		return &storeChannel.Channel
+		return storeChannel
+	}
+	thread := c.Thread(channelID)
+	if thread != nil {
+		return thread
 	}
 	return nil
 }
 
 // MessageChannel returns a channel from dm or text channel cache by ID
-func (c *CacheImpl) MessageChannel(channelID api.Snowflake) *api.MessageChannel {
+func (c *CacheImpl) MessageChannel(channelID api.Snowflake) api.MessageChannel {
 	dmChannel := c.DMChannel(channelID)
 	if dmChannel != nil {
-		return &dmChannel.MessageChannel
+		return dmChannel
 	}
 	textChannel := c.TextChannel(channelID)
 	if textChannel != nil {
-		return &textChannel.MessageChannel
+		return textChannel
+	}
+	thread := c.Thread(channelID)
+	if thread != nil {
+		return thread
 	}
 	return nil
 }
 
 // GuildChannel returns a channel from a guild by ID
-func (c *CacheImpl) GuildChannel(channelID api.Snowflake) *api.GuildChannel {
+func (c *CacheImpl) GuildChannel(channelID api.Snowflake) api.GuildChannel {
 	category := c.Category(channelID)
 	if category != nil {
-		return &category.GuildChannel
+		return category
 	}
 	textChannel := c.TextChannel(channelID)
 	if textChannel != nil {
-		return &textChannel.GuildChannel
+		return textChannel
 	}
 	voiceChannel := c.VoiceChannel(channelID)
 	if voiceChannel != nil {
-		return &voiceChannel.GuildChannel
+		return voiceChannel
 	}
 	storeChannel := c.StoreChannel(channelID)
 	if storeChannel != nil {
-		return &storeChannel.GuildChannel
+		return storeChannel
+	}
+	thread := c.Thread(channelID)
+	if thread != nil {
+		return thread
 	}
 	return nil
 }
 
 // DMChannel returns a DM channel by ID
-func (c *CacheImpl) DMChannel(dmChannelID api.Snowflake) *api.DMChannel {
+func (c *CacheImpl) DMChannel(dmChannelID api.Snowflake) api.DMChannel {
 	return c.dmChannels[dmChannelID]
 }
 
 // DMChannels return all DM channels as a slice
-func (c *CacheImpl) DMChannels() []*api.DMChannel {
-	channels := make([]*api.DMChannel, len(c.dmChannels))
+func (c *CacheImpl) DMChannels() []api.DMChannel {
+	channels := make([]api.DMChannel, len(c.dmChannels))
 	i := 0
 	for _, channel := range c.dmChannels {
 		channels[i] = channel
@@ -758,20 +845,20 @@ func (c *CacheImpl) DMChannels() []*api.DMChannel {
 }
 
 // DMChannelCache returns the DM channels as a map
-func (c *CacheImpl) DMChannelCache() map[api.Snowflake]*api.DMChannel {
+func (c *CacheImpl) DMChannelCache() map[api.Snowflake]api.DMChannel {
 	return c.dmChannels
 }
 
 // CacheDMChannel adds a DM channel to the cache
-func (c *CacheImpl) CacheDMChannel(dmChannel *api.DMChannel) *api.DMChannel {
+func (c *CacheImpl) CacheDMChannel(dmChannel api.DMChannel) api.DMChannel {
 	if c.cacheFlags.Missing(api.CacheFlagDMChannels) {
 		return dmChannel
 	}
-	if oldChannel, ok := c.dmChannels[dmChannel.ID]; ok {
-		*oldChannel = *dmChannel
+	if oldChannel, ok := c.dmChannels[dmChannel.ID()]; ok {
+		*oldChannel.(*api.ChannelImpl) = *dmChannel.(*api.ChannelImpl)
 		return oldChannel
 	}
-	c.dmChannels[dmChannel.ID] = dmChannel
+	c.dmChannels[dmChannel.ID()] = dmChannel
 	return dmChannel
 }
 
@@ -786,7 +873,7 @@ func (c *CacheImpl) UncacheDMChannel(dmChannelID api.Snowflake) {
 }
 
 // FindDMChannel finds a DM channel in cache with a custom method
-func (c *CacheImpl) FindDMChannel(check func(u *api.DMChannel) bool) *api.DMChannel {
+func (c *CacheImpl) FindDMChannel(check func(u api.DMChannel) bool) api.DMChannel {
 	for _, dmChannel := range c.dmChannels {
 		if check(dmChannel) {
 			return dmChannel
@@ -796,8 +883,8 @@ func (c *CacheImpl) FindDMChannel(check func(u *api.DMChannel) bool) *api.DMChan
 }
 
 // FindDMChannels finds DM Channels in cache with a custom method
-func (c *CacheImpl) FindDMChannels(check func(u *api.DMChannel) bool) []*api.DMChannel {
-	dmChannels := make([]*api.DMChannel, 1)
+func (c *CacheImpl) FindDMChannels(check func(u api.DMChannel) bool) []api.DMChannel {
+	dmChannels := make([]api.DMChannel, 1)
 	for _, dmChannel := range c.dmChannels {
 		if check(dmChannel) {
 			dmChannels = append(dmChannels, dmChannel)
@@ -807,7 +894,7 @@ func (c *CacheImpl) FindDMChannels(check func(u *api.DMChannel) bool) []*api.DMC
 }
 
 // TextChannel returns a text channel from cache by ID
-func (c *CacheImpl) TextChannel(textChannelID api.Snowflake) *api.TextChannel {
+func (c *CacheImpl) TextChannel(textChannelID api.Snowflake) api.TextChannel {
 	for _, guild := range c.textChannels {
 		if channel, ok := guild[textChannelID]; ok {
 			return channel
@@ -817,14 +904,14 @@ func (c *CacheImpl) TextChannel(textChannelID api.Snowflake) *api.TextChannel {
 }
 
 // TextChannelsByName returns text channel from cache by guild ID and name
-func (c *CacheImpl) TextChannelsByName(guildID api.Snowflake, name string, ignoreCase bool) []*api.TextChannel {
+func (c *CacheImpl) TextChannelsByName(guildID api.Snowflake, name string, ignoreCase bool) []api.TextChannel {
 	if guildTextChannels, ok := c.textChannels[guildID]; ok {
 		if ignoreCase {
 			name = strings.ToLower(name)
 		}
-		textChannels := make([]*api.TextChannel, 1)
+		textChannels := make([]api.TextChannel, 1)
 		for _, channel := range guildTextChannels {
-			if ignoreCase && strings.ToLower(*channel.MessageChannel.Name) == name || !ignoreCase && *channel.MessageChannel.Name == name {
+			if ignoreCase && strings.ToLower(channel.Name()) == name || !ignoreCase && channel.Name() == name {
 				textChannels = append(textChannels, channel)
 			}
 		}
@@ -834,9 +921,9 @@ func (c *CacheImpl) TextChannelsByName(guildID api.Snowflake, name string, ignor
 }
 
 // TextChannels returns the text channel cache from a guild
-func (c *CacheImpl) TextChannels(guildID api.Snowflake) []*api.TextChannel {
+func (c *CacheImpl) TextChannels(guildID api.Snowflake) []api.TextChannel {
 	if guildTextChannels, ok := c.textChannels[guildID]; ok {
-		textChannels := make([]*api.TextChannel, len(guildTextChannels))
+		textChannels := make([]api.TextChannel, len(guildTextChannels))
 		i := 0
 		for _, textChannel := range guildTextChannels {
 			textChannels[i] = textChannel
@@ -848,8 +935,8 @@ func (c *CacheImpl) TextChannels(guildID api.Snowflake) []*api.TextChannel {
 }
 
 // AllTextChannels returns the text channel cache as a slice
-func (c *CacheImpl) AllTextChannels() []*api.TextChannel {
-	textChannels := make([]*api.TextChannel, len(c.textChannels))
+func (c *CacheImpl) AllTextChannels() []api.TextChannel {
+	textChannels := make([]api.TextChannel, len(c.textChannels))
 	for _, guildTextChannels := range c.textChannels {
 		for _, textChannel := range guildTextChannels {
 			textChannels = append(textChannels, textChannel)
@@ -859,26 +946,26 @@ func (c *CacheImpl) AllTextChannels() []*api.TextChannel {
 }
 
 // TextChannelCache returns the channel cache as a map
-func (c *CacheImpl) TextChannelCache(guildID api.Snowflake) map[api.Snowflake]*api.TextChannel {
+func (c *CacheImpl) TextChannelCache(guildID api.Snowflake) map[api.Snowflake]api.TextChannel {
 	return c.textChannels[guildID]
 }
 
 // AllTextChannelCache returns the text channel cache as a map of maps
-func (c *CacheImpl) AllTextChannelCache() map[api.Snowflake]map[api.Snowflake]*api.TextChannel {
+func (c *CacheImpl) AllTextChannelCache() map[api.Snowflake]map[api.Snowflake]api.TextChannel {
 	return c.textChannels
 }
 
 // CacheTextChannel adds a channel to the cache
-func (c *CacheImpl) CacheTextChannel(textChannel *api.TextChannel) *api.TextChannel {
+func (c *CacheImpl) CacheTextChannel(textChannel api.TextChannel) api.TextChannel {
 	if c.cacheFlags.Missing(api.CacheFlagTextChannels) {
 		return textChannel
 	}
-	if guildTextChannels, ok := c.textChannels[*textChannel.GuildChannel.GuildID]; ok {
-		if guildTextChannel, ok := guildTextChannels[textChannel.MessageChannel.ID]; ok {
-			*guildTextChannel = *textChannel
+	if guildTextChannels, ok := c.textChannels[textChannel.GuildID()]; ok {
+		if guildTextChannel, ok := guildTextChannels[textChannel.ID()]; ok {
+			*guildTextChannel.(*api.ChannelImpl) = *textChannel.(*api.ChannelImpl)
 			return guildTextChannel
 		}
-		guildTextChannels[textChannel.MessageChannel.ID] = textChannel
+		guildTextChannels[textChannel.ID()] = textChannel
 	}
 	return textChannel
 }
@@ -894,7 +981,7 @@ func (c *CacheImpl) UncacheTextChannel(guildID api.Snowflake, textChannelID api.
 }
 
 // FindTextChannel finds a text channel in a guild by custom method
-func (c *CacheImpl) FindTextChannel(guildID api.Snowflake, check func(u *api.TextChannel) bool) *api.TextChannel {
+func (c *CacheImpl) FindTextChannel(guildID api.Snowflake, check func(u api.TextChannel) bool) api.TextChannel {
 	for _, textChannel := range c.TextChannelCache(guildID) {
 		if check(textChannel) {
 			return textChannel
@@ -904,8 +991,8 @@ func (c *CacheImpl) FindTextChannel(guildID api.Snowflake, check func(u *api.Tex
 }
 
 // FindTextChannels finds text channels in a guild by custom method
-func (c *CacheImpl) FindTextChannels(guildID api.Snowflake, check func(u *api.TextChannel) bool) []*api.TextChannel {
-	textChannels := make([]*api.TextChannel, 1)
+func (c *CacheImpl) FindTextChannels(guildID api.Snowflake, check func(u api.TextChannel) bool) []api.TextChannel {
+	textChannels := make([]api.TextChannel, 1)
 	for _, textChannel := range c.TextChannelCache(guildID) {
 		if check(textChannel) {
 			textChannels = append(textChannels, textChannel)
@@ -914,8 +1001,110 @@ func (c *CacheImpl) FindTextChannels(guildID api.Snowflake, check func(u *api.Te
 	return textChannels
 }
 
+// Thread returns a thread from cache by ID
+func (c *CacheImpl) Thread(threadID api.Snowflake) api.Thread {
+	for _, guild := range c.threads {
+		if channel, ok := guild[threadID]; ok {
+			return channel
+		}
+	}
+	return nil
+}
+
+// ThreadsByName returns text channel from cache by guild ID and name
+func (c *CacheImpl) ThreadsByName(guildID api.Snowflake, name string, ignoreCase bool) []api.Thread {
+	if guildThreads, ok := c.threads[guildID]; ok {
+		if ignoreCase {
+			name = strings.ToLower(name)
+		}
+		threads := make([]api.Thread, 1)
+		for _, channel := range guildThreads {
+			if ignoreCase && strings.ToLower(channel.Name()) == name || !ignoreCase && channel.Name() == name {
+				threads = append(threads, channel)
+			}
+		}
+		return threads
+	}
+	return nil
+}
+
+// Threads returns the text channel cache from a guild
+func (c *CacheImpl) Threads(guildID api.Snowflake) []api.Thread {
+	if guildThreads, ok := c.threads[guildID]; ok {
+		threads := make([]api.Thread, len(guildThreads))
+		i := 0
+		for _, thread := range guildThreads {
+			threads[i] = thread
+			i++
+		}
+		return threads
+	}
+	return nil
+}
+
+// ThreadCache returns the channel cache as a map
+func (c *CacheImpl) ThreadCache(guildID api.Snowflake) map[api.Snowflake]api.Thread {
+	return c.threads[guildID]
+}
+
+// AllThreadCache returns the thread cache as a map
+func (c *CacheImpl) AllThreadCache() map[api.Snowflake]map[api.Snowflake]api.Thread {
+	return c.threads
+}
+
+// CacheThread adds a channel to the cache
+func (c *CacheImpl) CacheThread(thread api.Thread) api.Thread {
+	if c.cacheFlags.Missing(api.CacheFlagThreads) {
+		return thread
+	}
+	if guildThreads, ok := c.threads[thread.GuildID()]; ok {
+		if guildThread, ok := guildThreads[thread.ID()]; ok {
+			*guildThread.(*api.ChannelImpl) = *thread.(*api.ChannelImpl)
+			return guildThread
+		}
+		guildThreads[thread.ID()] = thread
+	}
+	return thread
+}
+
+// UncacheThread removes a text channel from the cache
+func (c *CacheImpl) UncacheThread(guildID api.Snowflake, threadID api.Snowflake) {
+	// TODO: check this
+	// should be okay to just uncache all messages if the channel gets uncached as that should mean it got deleted
+	if _, ok := c.messages[threadID]; ok {
+		delete(c.messages, threadID)
+	}
+	delete(c.threads[guildID], threadID)
+}
+
+// UncacheThreads removes all Threads for a Guild from the Cache
+func (c *CacheImpl) UncacheThreads(guildID api.Snowflake) {
+	delete(c.threads, guildID)
+}
+
+// FindThread finds a text channel in a guild by custom method
+func (c *CacheImpl) FindThread(guildID api.Snowflake, check func(u api.Thread) bool) api.Thread {
+	for _, thread := range c.ThreadCache(guildID) {
+		if check(thread) {
+			return thread
+		}
+	}
+	return nil
+}
+
+// FindThreads finds text channels in a guild by custom method
+func (c *CacheImpl) FindThreads(guildID api.Snowflake, check func(u api.Thread) bool) []api.Thread {
+	threads := make([]api.Thread, 1)
+	for _, thread := range c.ThreadCache(guildID) {
+		if check(thread) {
+			threads = append(threads, thread)
+		}
+	}
+	return threads
+}
+
 //StoreChannel returns a store channel from cache by ID
-func (c *CacheImpl) StoreChannel(storeChannelID api.Snowflake) *api.StoreChannel {
+func (c *CacheImpl) StoreChannel(storeChannelID api.Snowflake) api.StoreChannel {
 	for _, guild := range c.storeChannels {
 		if channel, ok := guild[storeChannelID]; ok {
 			return channel
@@ -925,14 +1114,14 @@ func (c *CacheImpl) StoreChannel(storeChannelID api.Snowflake) *api.StoreChannel
 }
 
 //StoreChannelsByName returns store channels from cache by name
-func (c *CacheImpl) StoreChannelsByName(guildID api.Snowflake, name string, ignoreCase bool) []*api.StoreChannel {
+func (c *CacheImpl) StoreChannelsByName(guildID api.Snowflake, name string, ignoreCase bool) []api.StoreChannel {
 	if guildStoreChannels, ok := c.storeChannels[guildID]; ok {
 		if ignoreCase {
 			name = strings.ToLower(name)
 		}
-		storeChannels := make([]*api.StoreChannel, 1)
+		storeChannels := make([]api.StoreChannel, 1)
 		for _, channel := range guildStoreChannels {
-			if ignoreCase && strings.ToLower(*channel.Name) == name || !ignoreCase && *channel.Name == name {
+			if ignoreCase && strings.ToLower(channel.Name()) == name || !ignoreCase && channel.Name() == name {
 				storeChannels = append(storeChannels, channel)
 			}
 		}
@@ -942,9 +1131,9 @@ func (c *CacheImpl) StoreChannelsByName(guildID api.Snowflake, name string, igno
 }
 
 //StoreChannels returns store channels from cache by guild ID
-func (c *CacheImpl) StoreChannels(guildID api.Snowflake) []*api.StoreChannel {
+func (c *CacheImpl) StoreChannels(guildID api.Snowflake) []api.StoreChannel {
 	if guildStoreChannels, ok := c.storeChannels[guildID]; ok {
-		storeChannels := make([]*api.StoreChannel, len(guildStoreChannels))
+		storeChannels := make([]api.StoreChannel, len(guildStoreChannels))
 		i := 0
 		for _, storeChannel := range guildStoreChannels {
 			storeChannels[i] = storeChannel
@@ -956,8 +1145,8 @@ func (c *CacheImpl) StoreChannels(guildID api.Snowflake) []*api.StoreChannel {
 }
 
 // AllStoreChannels returns all store channels from cache as a map
-func (c *CacheImpl) AllStoreChannels() []*api.StoreChannel {
-	storeChannels := make([]*api.StoreChannel, len(c.storeChannels))
+func (c *CacheImpl) AllStoreChannels() []api.StoreChannel {
+	storeChannels := make([]api.StoreChannel, len(c.storeChannels))
 	for _, guildStoreChannels := range c.storeChannels {
 		for _, storeChannel := range guildStoreChannels {
 			storeChannels = append(storeChannels, storeChannel)
@@ -967,26 +1156,26 @@ func (c *CacheImpl) AllStoreChannels() []*api.StoreChannel {
 }
 
 //StoreChannelCache returns the store channels of a guild by ID
-func (c *CacheImpl) StoreChannelCache(guildID api.Snowflake) map[api.Snowflake]*api.StoreChannel {
+func (c *CacheImpl) StoreChannelCache(guildID api.Snowflake) map[api.Snowflake]api.StoreChannel {
 	return c.storeChannels[guildID]
 }
 
 //AllStoreChannelCache returns all store channels from cache as a map of maps
-func (c *CacheImpl) AllStoreChannelCache() map[api.Snowflake]map[api.Snowflake]*api.StoreChannel {
+func (c *CacheImpl) AllStoreChannelCache() map[api.Snowflake]map[api.Snowflake]api.StoreChannel {
 	return c.storeChannels
 }
 
 // CacheStoreChannel adds a store channel to the cache
-func (c *CacheImpl) CacheStoreChannel(storeChannel *api.StoreChannel) *api.StoreChannel {
+func (c *CacheImpl) CacheStoreChannel(storeChannel api.StoreChannel) api.StoreChannel {
 	if c.cacheFlags.Missing(api.CacheFlagStoreChannels) {
 		return storeChannel
 	}
-	if guildStoreChannels, ok := c.storeChannels[*storeChannel.GuildID]; ok {
-		if guildStoreChannel, ok := guildStoreChannels[storeChannel.ID]; ok {
-			*guildStoreChannel = *storeChannel
+	if guildStoreChannels, ok := c.storeChannels[storeChannel.GuildID()]; ok {
+		if guildStoreChannel, ok := guildStoreChannels[storeChannel.ID()]; ok {
+			*guildStoreChannel.(*api.ChannelImpl) = *storeChannel.(*api.ChannelImpl)
 			return guildStoreChannel
 		}
-		guildStoreChannels[storeChannel.ID] = storeChannel
+		guildStoreChannels[storeChannel.ID()] = storeChannel
 	}
 	return storeChannel
 }
@@ -997,7 +1186,7 @@ func (c *CacheImpl) UncacheStoreChannel(guildID api.Snowflake, storeChannelID ap
 }
 
 // FindStoreChannel returns a store channel from cache by custom method
-func (c *CacheImpl) FindStoreChannel(guildID api.Snowflake, check func(u *api.StoreChannel) bool) *api.StoreChannel {
+func (c *CacheImpl) FindStoreChannel(guildID api.Snowflake, check func(u api.StoreChannel) bool) api.StoreChannel {
 	for _, storeChannel := range c.StoreChannelCache(guildID) {
 		if check(storeChannel) {
 			return storeChannel
@@ -1007,8 +1196,8 @@ func (c *CacheImpl) FindStoreChannel(guildID api.Snowflake, check func(u *api.St
 }
 
 // FindStoreChannels returns store channels from cache by custom method
-func (c *CacheImpl) FindStoreChannels(guildID api.Snowflake, check func(u *api.StoreChannel) bool) []*api.StoreChannel {
-	storeChannels := make([]*api.StoreChannel, 1)
+func (c *CacheImpl) FindStoreChannels(guildID api.Snowflake, check func(u api.StoreChannel) bool) []api.StoreChannel {
+	storeChannels := make([]api.StoreChannel, 1)
 	for _, storeChannel := range c.StoreChannelCache(guildID) {
 		if check(storeChannel) {
 			storeChannels = append(storeChannels, storeChannel)
@@ -1018,7 +1207,7 @@ func (c *CacheImpl) FindStoreChannels(guildID api.Snowflake, check func(u *api.S
 }
 
 // VoiceChannel returns a voice channel from cache by ID
-func (c *CacheImpl) VoiceChannel(voiceChannelID api.Snowflake) *api.VoiceChannel {
+func (c *CacheImpl) VoiceChannel(voiceChannelID api.Snowflake) api.VoiceChannel {
 	for _, guild := range c.voiceChannels {
 		if channel, ok := guild[voiceChannelID]; ok {
 			return channel
@@ -1028,14 +1217,14 @@ func (c *CacheImpl) VoiceChannel(voiceChannelID api.Snowflake) *api.VoiceChannel
 }
 
 // VoiceChannelsByName returns voice channels from cache by name
-func (c *CacheImpl) VoiceChannelsByName(guildID api.Snowflake, name string, ignoreCase bool) []*api.VoiceChannel {
+func (c *CacheImpl) VoiceChannelsByName(guildID api.Snowflake, name string, ignoreCase bool) []api.VoiceChannel {
 	if guildVoiceChannels, ok := c.voiceChannels[guildID]; ok {
 		if ignoreCase {
 			name = strings.ToLower(name)
 		}
-		voiceChannels := make([]*api.VoiceChannel, 1)
+		voiceChannels := make([]api.VoiceChannel, 1)
 		for _, channel := range guildVoiceChannels {
-			if ignoreCase && strings.ToLower(*channel.Name) == name || !ignoreCase && *channel.Name == name {
+			if ignoreCase && strings.ToLower(channel.Name()) == name || !ignoreCase && channel.Name() == name {
 				voiceChannels = append(voiceChannels, channel)
 			}
 		}
@@ -1045,9 +1234,9 @@ func (c *CacheImpl) VoiceChannelsByName(guildID api.Snowflake, name string, igno
 }
 
 // VoiceChannels returns voice channels from a guild's cache
-func (c *CacheImpl) VoiceChannels(guildID api.Snowflake) []*api.VoiceChannel {
+func (c *CacheImpl) VoiceChannels(guildID api.Snowflake) []api.VoiceChannel {
 	if guildVoiceChannels, ok := c.voiceChannels[guildID]; ok {
-		voiceChannels := make([]*api.VoiceChannel, len(guildVoiceChannels))
+		voiceChannels := make([]api.VoiceChannel, len(guildVoiceChannels))
 		i := 0
 		for _, voiceChannel := range guildVoiceChannels {
 			voiceChannels[i] = voiceChannel
@@ -1059,8 +1248,8 @@ func (c *CacheImpl) VoiceChannels(guildID api.Snowflake) []*api.VoiceChannel {
 }
 
 // AllVoiceChannels returns all of the voice channels from cache as a slice
-func (c *CacheImpl) AllVoiceChannels() []*api.VoiceChannel {
-	voiceChannels := make([]*api.VoiceChannel, len(c.voiceChannels))
+func (c *CacheImpl) AllVoiceChannels() []api.VoiceChannel {
+	voiceChannels := make([]api.VoiceChannel, len(c.voiceChannels))
 	for _, guildVoiceChannels := range c.voiceChannels {
 		for _, voiceChannel := range guildVoiceChannels {
 			voiceChannels = append(voiceChannels, voiceChannel)
@@ -1070,26 +1259,26 @@ func (c *CacheImpl) AllVoiceChannels() []*api.VoiceChannel {
 }
 
 // VoiceChannelCache returns all of the voice channels from cache as a map
-func (c *CacheImpl) VoiceChannelCache(guildID api.Snowflake) map[api.Snowflake]*api.VoiceChannel {
+func (c *CacheImpl) VoiceChannelCache(guildID api.Snowflake) map[api.Snowflake]api.VoiceChannel {
 	return c.voiceChannels[guildID]
 }
 
 // AllVoiceChannelCache returns all of the voice channels from cache as a map of maps
-func (c *CacheImpl) AllVoiceChannelCache() map[api.Snowflake]map[api.Snowflake]*api.VoiceChannel {
+func (c *CacheImpl) AllVoiceChannelCache() map[api.Snowflake]map[api.Snowflake]api.VoiceChannel {
 	return c.voiceChannels
 }
 
 // CacheVoiceChannel adds a voice channel to cache
-func (c *CacheImpl) CacheVoiceChannel(voiceChannel *api.VoiceChannel) *api.VoiceChannel {
+func (c *CacheImpl) CacheVoiceChannel(voiceChannel api.VoiceChannel) api.VoiceChannel {
 	if c.cacheFlags.Missing(api.CacheFlagVoiceChannels) {
 		return voiceChannel
 	}
-	if guildVoiceChannels, ok := c.voiceChannels[*voiceChannel.GuildID]; ok {
-		if guildVoiceChannel, ok := guildVoiceChannels[voiceChannel.ID]; ok {
-			*guildVoiceChannel = *voiceChannel
+	if guildVoiceChannels, ok := c.voiceChannels[voiceChannel.GuildID()]; ok {
+		if guildVoiceChannel, ok := guildVoiceChannels[voiceChannel.ID()]; ok {
+			*guildVoiceChannel.(*api.ChannelImpl) = *voiceChannel.(*api.ChannelImpl)
 			return guildVoiceChannel
 		}
-		guildVoiceChannels[voiceChannel.ID] = voiceChannel
+		guildVoiceChannels[voiceChannel.ID()] = voiceChannel
 	}
 	return voiceChannel
 }
@@ -1100,7 +1289,7 @@ func (c *CacheImpl) UncacheVoiceChannel(guildID api.Snowflake, voiceChannelID ap
 }
 
 // FindVoiceChannel returns a voice channel from cache by custom method
-func (c *CacheImpl) FindVoiceChannel(guildID api.Snowflake, check func(u *api.VoiceChannel) bool) *api.VoiceChannel {
+func (c *CacheImpl) FindVoiceChannel(guildID api.Snowflake, check func(u api.VoiceChannel) bool) api.VoiceChannel {
 	for _, voiceChannel := range c.VoiceChannelCache(guildID) {
 		if check(voiceChannel) {
 			return voiceChannel
@@ -1110,8 +1299,8 @@ func (c *CacheImpl) FindVoiceChannel(guildID api.Snowflake, check func(u *api.Vo
 }
 
 // FindVoiceChannels returns voice channels from cache by custom method
-func (c *CacheImpl) FindVoiceChannels(guildID api.Snowflake, check func(u *api.VoiceChannel) bool) []*api.VoiceChannel {
-	voiceChannels := make([]*api.VoiceChannel, 1)
+func (c *CacheImpl) FindVoiceChannels(guildID api.Snowflake, check func(u api.VoiceChannel) bool) []api.VoiceChannel {
+	voiceChannels := make([]api.VoiceChannel, 1)
 	for _, voiceChannel := range c.VoiceChannelCache(guildID) {
 		if check(voiceChannel) {
 			voiceChannels = append(voiceChannels, voiceChannel)
@@ -1121,7 +1310,7 @@ func (c *CacheImpl) FindVoiceChannels(guildID api.Snowflake, check func(u *api.V
 }
 
 // Category returns a category from cache by ID
-func (c *CacheImpl) Category(categoryID api.Snowflake) *api.Category {
+func (c *CacheImpl) Category(categoryID api.Snowflake) api.Category {
 	for _, guildCategories := range c.categories {
 		if channel, ok := guildCategories[categoryID]; ok {
 			return channel
@@ -1131,14 +1320,14 @@ func (c *CacheImpl) Category(categoryID api.Snowflake) *api.Category {
 }
 
 // CategoriesByName returns categories from cache by name
-func (c *CacheImpl) CategoriesByName(guildID api.Snowflake, name string, ignoreCase bool) []*api.Category {
+func (c *CacheImpl) CategoriesByName(guildID api.Snowflake, name string, ignoreCase bool) []api.Category {
 	if guildCategories, ok := c.categories[guildID]; ok {
 		if ignoreCase {
 			name = strings.ToLower(name)
 		}
-		categories := make([]*api.Category, 1)
+		categories := make([]api.Category, 1)
 		for _, channel := range guildCategories {
-			if ignoreCase && strings.ToLower(*channel.Name) == name || !ignoreCase && *channel.Name == name {
+			if ignoreCase && strings.ToLower(channel.Name()) == name || !ignoreCase && channel.Name() == name {
 				categories = append(categories, channel)
 			}
 		}
@@ -1148,9 +1337,9 @@ func (c *CacheImpl) CategoriesByName(guildID api.Snowflake, name string, ignoreC
 }
 
 // Categories returns the categories of a guild by ID
-func (c *CacheImpl) Categories(guildID api.Snowflake) []*api.Category {
+func (c *CacheImpl) Categories(guildID api.Snowflake) []api.Category {
 	if guildCategories, ok := c.categories[guildID]; ok {
-		categories := make([]*api.Category, len(guildCategories))
+		categories := make([]api.Category, len(guildCategories))
 		i := 0
 		for _, category := range guildCategories {
 			categories[i] = category
@@ -1162,8 +1351,8 @@ func (c *CacheImpl) Categories(guildID api.Snowflake) []*api.Category {
 }
 
 // AllCategories returns all categories from cache as a slice
-func (c *CacheImpl) AllCategories() []*api.Category {
-	categories := make([]*api.Category, len(c.categories))
+func (c *CacheImpl) AllCategories() []api.Category {
+	categories := make([]api.Category, len(c.categories))
 	for _, guildCategories := range c.categories {
 		for _, category := range guildCategories {
 			categories = append(categories, category)
@@ -1173,26 +1362,27 @@ func (c *CacheImpl) AllCategories() []*api.Category {
 }
 
 // CategoryCache returns all categories from a guild's cache as a map
-func (c *CacheImpl) CategoryCache(guildID api.Snowflake) map[api.Snowflake]*api.Category {
+func (c *CacheImpl) CategoryCache(guildID api.Snowflake) map[api.Snowflake]api.Category {
 	return c.categories[guildID]
 }
 
 // AllCategoryCache returns all categories as a map of maps
-func (c *CacheImpl) AllCategoryCache() map[api.Snowflake]map[api.Snowflake]*api.Category {
+func (c *CacheImpl) AllCategoryCache() map[api.Snowflake]map[api.Snowflake]api.Category {
 	return c.categories
 }
 
 // CacheCategory adds a category to the cache
-func (c *CacheImpl) CacheCategory(category *api.Category) *api.Category {
+func (c *CacheImpl) CacheCategory(category api.Category) api.Category {
 	if c.cacheFlags.Missing(api.CacheFlagCategories) {
 		return category
 	}
-	if guildCategories, ok := c.categories[*category.GuildID]; ok {
-		if guildCategory, ok := guildCategories[category.ID]; ok {
-			*guildCategory = *category
+	if guildCategories, ok := c.categories[category.GuildID()]; ok {
+		if guildCategory, ok := guildCategories[category.ID()]; ok {
+			// todo this is ugly af topi
+			*guildCategory.(*api.ChannelImpl) = *category.(*api.ChannelImpl)
 			return guildCategory
 		}
-		guildCategories[category.ID] = category
+		guildCategories[category.ID()] = category
 	}
 	return category
 }
@@ -1203,7 +1393,7 @@ func (c *CacheImpl) UncacheCategory(guildID api.Snowflake, categoryID api.Snowfl
 }
 
 // FindCategory finds a category in a guild by custom method
-func (c *CacheImpl) FindCategory(guildID api.Snowflake, check func(u *api.Category) bool) *api.Category {
+func (c *CacheImpl) FindCategory(guildID api.Snowflake, check func(u api.Category) bool) api.Category {
 	for _, category := range c.CategoryCache(guildID) {
 		if check(category) {
 			return category
@@ -1213,8 +1403,8 @@ func (c *CacheImpl) FindCategory(guildID api.Snowflake, check func(u *api.Catego
 }
 
 // FindCategories finds categories in a guild by custom method
-func (c *CacheImpl) FindCategories(guildID api.Snowflake, check func(u *api.Category) bool) []*api.Category {
-	categories := make([]*api.Category, 1)
+func (c *CacheImpl) FindCategories(guildID api.Snowflake, check func(u api.Category) bool) []api.Category {
+	categories := make([]api.Category, 1)
 	for _, category := range c.CategoryCache(guildID) {
 		if check(category) {
 			categories = append(categories, category)
@@ -1223,73 +1413,73 @@ func (c *CacheImpl) FindCategories(guildID api.Snowflake, check func(u *api.Cate
 	return categories
 }
 
-// Emote returns a specific emote from the cache
+// Emote returns a specific emoji from the cache
 func (c *CacheImpl) Emote(emoteID api.Snowflake) *api.Emoji {
-	for _, guildEmotes := range c.emotes {
-		if emote, ok := guildEmotes[emoteID]; ok {
-			return emote
+	for _, guildEmojis := range c.emojis {
+		if emoji, ok := guildEmojis[emoteID]; ok {
+			return emoji
 		}
 	}
 	return nil
 }
 
-// EmotesByName returns all emotes for a guild by name
+// EmotesByName returns all emojis for a guild by name
 func (c *CacheImpl) EmotesByName(guildID api.Snowflake, name string, ignoreCase bool) []*api.Emoji {
-	if guildEmotes, ok := c.emotes[guildID]; ok {
+	if guildEmojis, ok := c.emojis[guildID]; ok {
 		if ignoreCase {
 			name = strings.ToLower(name)
 		}
-		emotes := make([]*api.Emoji, 1)
-		for _, emote := range guildEmotes {
-			if ignoreCase && strings.ToLower(emote.Name) == name || !ignoreCase && emote.Name == name {
-				emotes = append(emotes, emote)
+		emojis := make([]*api.Emoji, 1)
+		for _, emoji := range guildEmojis {
+			if ignoreCase && strings.ToLower(emoji.Name) == name || !ignoreCase && emoji.Name == name {
+				emojis = append(emojis, emoji)
 			}
 		}
-		return emotes
+		return emojis
 	}
 	return nil
 }
 
-// Emotes returns all cached emotes for a guild
+// Emotes returns all cached emojis for a guild
 func (c *CacheImpl) Emotes(guildID api.Snowflake) []*api.Emoji {
-	if guildEmotes, ok := c.emotes[guildID]; ok {
-		emotes := make([]*api.Emoji, len(guildEmotes))
+	if guildEmojis, ok := c.emojis[guildID]; ok {
+		emojis := make([]*api.Emoji, len(guildEmojis))
 		i := 0
-		for _, emote := range guildEmotes {
-			emotes[i] = emote
+		for _, emoji := range guildEmojis {
+			emojis[i] = emoji
 			i++
 		}
-		return emotes
+		return emojis
 	}
 	return nil
 }
 
-// EmoteCache returns the emote cache for a specific guild
+// EmoteCache returns the emoji cache for a specific guild
 func (c *CacheImpl) EmoteCache(guildID api.Snowflake) map[api.Snowflake]*api.Emoji {
-	return c.emotes[guildID]
+	return c.emojis[guildID]
 }
 
-// AllEmoteCache returns the full emote cache
+// AllEmoteCache returns the full emoji cache
 func (c *CacheImpl) AllEmoteCache() map[api.Snowflake]map[api.Snowflake]*api.Emoji {
-	return c.emotes
+	return c.emojis
 }
 
 // CacheEmote adds an Emote to the api.Cache if emoji caches are used
-func (c *CacheImpl) CacheEmote(emote *api.Emoji) *api.Emoji {
+func (c *CacheImpl) CacheEmote(emoji *api.Emoji) *api.Emoji {
 	if c.cacheFlags.Missing(api.CacheFlagEmotes) {
-		return emote
+		return emoji
 	}
-	if guildEmotes, ok := c.emotes[emote.GuildID]; ok {
-		if guildEmote, ok := guildEmotes[emote.ID]; ok {
-			*guildEmote = *emote
-			return guildEmote
+	if guildEmojis, ok := c.emojis[emoji.GuildID]; ok {
+		if guildEmoji, ok := guildEmojis[emoji.ID]; ok {
+			*guildEmoji = *emoji
+			return guildEmoji
 		}
-		guildEmotes[emote.ID] = emote
+		guildEmojis[emoji.ID] = emoji
 	}
-	return emote
+	return emoji
 }
 
 // UncacheEmote removes an Emote from api.Cache
 func (c *CacheImpl) UncacheEmote(guildID api.Snowflake, emoteID api.Snowflake) {
-	delete(c.emotes[guildID], emoteID)
+	delete(c.emojis[guildID], emoteID)
 }

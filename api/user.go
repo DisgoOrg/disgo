@@ -55,8 +55,8 @@ func (u *User) String() string {
 	return u.Mention()
 }
 
-// OpenDMChannel creates a DMChannel between the user and the Disgo client
-func (u *User) OpenDMChannel() (*DMChannel, restclient.RestError) {
+// CreateDMChannel creates a DMChannel between the user and the Disgo client
+func (u *User) CreateDMChannel() (DMChannel, restclient.RestError) {
 	return u.Disgo.RestClient().CreateDMChannel(u.ID)
 }
 

@@ -23,7 +23,7 @@ func (u *VoiceStateUpdateEvent) Guild() *Guild {
 }
 
 // VoiceChannel returns the VoiceChannel for this VoiceStateUpdate from the Cache
-func (u *VoiceStateUpdateEvent) VoiceChannel() *VoiceChannel {
+func (u *VoiceStateUpdateEvent) VoiceChannel() VoiceChannel {
 	if u.VoiceState.ChannelID == nil {
 		return nil
 	}

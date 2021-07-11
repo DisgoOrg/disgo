@@ -2,27 +2,34 @@ package events
 
 import "github.com/DisgoOrg/disgo/api"
 
-// GenericReactionEvents is called upon receiving MessageReactionAddEvent or MessageReactionRemoveEvent
-type GenericReactionEvents struct {
+// GenericMessageReactionEvent is called upon receiving MessageReactionAddEvent or MessageReactionRemoveEvent
+type GenericMessageReactionEvent struct {
 	*GenericMessageEvent
-	UserID          api.Snowflake
-	User            *api.User
-	MessageReaction api.MessageReaction
+	Emoji *api.Emoji
 }
 
-// MessageReactionAddEvent indicates that a api.User added a api.MessageReaction to a api.Message in a api.Channel(this+++ requires the api.GatewayIntentsGuildMessageReactions and/or api.GatewayIntentsDirectMessageReactions)
+type GenericMessageUserReactionEvent struct {
+	*GenericMessageReactionEvent
+	UserID api.Snowflake
+}
+
+func (e *GenericMessageUserReactionEvent) User() *api.User {
+	return e.Disgo().Cache().User(e.UserID)
+}
+
+// MessageReactionAddEvent indicates that a api.User added a api.MessageReaction to a api.Message in a api.Channel(this requires the api.GatewayIntentsGuildMessageReactions and/or api.GatewayIntentsDirectMessageReactions)
 type MessageReactionAddEvent struct {
-	*GenericReactionEvents
+	*GenericMessageUserReactionEvent
 }
 
 // MessageReactionRemoveEvent indicates that a api.User removed a api.MessageReaction from a api.Message in a api.Channel(requires the api.GatewayIntentsGuildMessageReactions and/or api.GatewayIntentsDirectMessageReactions)
 type MessageReactionRemoveEvent struct {
-	*GenericReactionEvents
+	*GenericMessageUserReactionEvent
 }
 
 // MessageReactionRemoveEmojiEvent indicates someone removed all api.MessageReaction of a specific api.Emoji from a api.Message in a api.Channel(requires the api.GatewayIntentsGuildMessageReactions and/or api.GatewayIntentsDirectMessageReactions)
 type MessageReactionRemoveEmojiEvent struct {
-	*GenericMessageEvent
+	*GenericMessageReactionEvent
 	MessageReaction api.MessageReaction
 }
 

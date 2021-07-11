@@ -15,45 +15,43 @@ func (h ChannelUpdateHandler) Event() api.GatewayEventType {
 
 // New constructs a new payload receiver for the raw gateway event
 func (h ChannelUpdateHandler) New() interface{} {
-	return &api.Channel{}
+	return &api.ChannelImpl{}
 }
 
 // HandleGatewayEvent handles the specific raw gateway event
 func (h ChannelUpdateHandler) HandleGatewayEvent(disgo api.Disgo, eventManager api.EventManager, sequenceNumber int, i interface{}) {
-	channel, ok := i.(*api.Channel)
+	channel, ok := i.(*api.ChannelImpl)
 	if !ok {
 		return
 	}
 
-	channel.Disgo = disgo
+	channel.Disgo_ = disgo
 
 	genericChannelEvent := &events.GenericChannelEvent{
 		GenericEvent: events.NewGenericEvent(disgo, sequenceNumber),
-		ChannelID:    channel.ID,
+		ChannelID:    channel.ID(),
 		Channel:      channel,
 	}
 
 	var genericGuildChannelEvent *events.GenericGuildChannelEvent
-	if channel.GuildID != nil {
+	if channel.Guild() != nil {
 		genericGuildChannelEvent = &events.GenericGuildChannelEvent{
 			GenericChannelEvent: genericChannelEvent,
-			GuildID:             *channel.GuildID,
-			GuildChannel: &api.GuildChannel{
-				Channel: *channel,
-			},
+			GuildID:             channel.GuildID(),
+			GuildChannel:        channel,
 		}
 
 		eventManager.Dispatch(&events.GuildChannelUpdateEvent{
 			GenericGuildChannelEvent: genericGuildChannelEvent,
-			OldGuildChannel:          disgo.Cache().GuildChannel(channel.ID),
+			OldGuildChannel:          disgo.Cache().GuildChannel(channel.ID()),
 		})
 	}
 
-	switch channel.Type {
+	switch channel.Type() {
 	case api.ChannelTypeDM:
-		oldDMChannel := disgo.Cache().DMChannel(channel.ID)
+		oldDMChannel := disgo.Cache().DMChannel(channel.ID())
 		if oldDMChannel != nil {
-			oldDMChannel = &*oldDMChannel
+			oldDMChannel = &*oldDMChannel.(*api.ChannelImpl)
 		}
 
 		eventManager.Dispatch(&events.DMChannelUpdateEvent{
@@ -68,9 +66,9 @@ func (h ChannelUpdateHandler) HandleGatewayEvent(disgo api.Disgo, eventManager a
 		disgo.Logger().Warnf("ChannelTypeGroupDM received what the hell discord")
 
 	case api.ChannelTypeText, api.ChannelTypeNews:
-		oldTextChannel := disgo.Cache().TextChannel(channel.ID)
+		oldTextChannel := disgo.Cache().TextChannel(channel.ID())
 		if oldTextChannel != nil {
-			oldTextChannel = &*oldTextChannel
+			oldTextChannel = &*oldTextChannel.(*api.ChannelImpl)
 		}
 
 		eventManager.Dispatch(&events.TextChannelUpdateEvent{
@@ -82,9 +80,9 @@ func (h ChannelUpdateHandler) HandleGatewayEvent(disgo api.Disgo, eventManager a
 		})
 
 	case api.ChannelTypeStore:
-		oldStoreChannel := disgo.Cache().StoreChannel(channel.ID)
+		oldStoreChannel := disgo.Cache().StoreChannel(channel.ID())
 		if oldStoreChannel != nil {
-			oldStoreChannel = &*oldStoreChannel
+			oldStoreChannel = &*oldStoreChannel.(*api.ChannelImpl)
 		}
 
 		eventManager.Dispatch(&events.StoreChannelUpdateEvent{
@@ -96,9 +94,9 @@ func (h ChannelUpdateHandler) HandleGatewayEvent(disgo api.Disgo, eventManager a
 		})
 
 	case api.ChannelTypeCategory:
-		oldCategory := disgo.Cache().Category(channel.ID)
+		oldCategory := disgo.Cache().Category(channel.ID())
 		if oldCategory != nil {
-			oldCategory = &*oldCategory
+			oldCategory = &*oldCategory.(*api.ChannelImpl)
 		}
 
 		eventManager.Dispatch(&events.CategoryUpdateEvent{
@@ -110,9 +108,9 @@ func (h ChannelUpdateHandler) HandleGatewayEvent(disgo api.Disgo, eventManager a
 		})
 
 	case api.ChannelTypeVoice:
-		oldVoiceChannel := disgo.Cache().VoiceChannel(channel.ID)
+		oldVoiceChannel := disgo.Cache().VoiceChannel(channel.ID())
 		if oldVoiceChannel != nil {
-			oldVoiceChannel = &*oldVoiceChannel
+			oldVoiceChannel = &*oldVoiceChannel.(*api.ChannelImpl)
 		}
 
 		eventManager.Dispatch(&events.VoiceChannelUpdateEvent{

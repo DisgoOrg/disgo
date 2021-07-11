@@ -23,7 +23,7 @@ const (
 	MessageTypeGuildMemberJoin
 	MessageTypeUserPremiumGuildSubscription
 	MessageTypeUserPremiumGuildSubscriptionTier1
-	MMessageTypeUserPremiumGuildSubscriptionTier2
+	MessageTypeUserPremiumGuildSubscriptionTier2
 	MessageTypeUserPremiumGuildSubscriptionTier3
 	MessageTypeChannelFollowAdd
 	_
@@ -31,9 +31,10 @@ const (
 	MessageTypeGuildDiscoveryRequalified
 	MessageTypeGuildDiscoveryInitialWarning
 	MessageTypeGuildDiscoveryFinalWarning
-	_
+	MessageTypeThreadCreated
 	MessageTypeReply
 	MessageTypeCommand
+	MessageTypeThreadStarterMessage
 )
 
 // The MessageFlags of a Message
@@ -283,8 +284,8 @@ func (m *Message) Guild() *Guild {
 	return m.Disgo.Cache().Guild(*m.GuildID)
 }
 
-// Channel gets the channel the message_events was sent in
-func (m *Message) Channel() *MessageChannel {
+// Channel gets the MessageChannel the message_events was sent in
+func (m *Message) Channel() MessageChannel {
 	return m.Disgo.Cache().MessageChannel(m.ChannelID)
 }
 
@@ -311,7 +312,7 @@ func (m *Message) Delete() restclient.RestError {
 // Crosspost crossposts an existing message
 func (m *Message) Crosspost() (*Message, restclient.RestError) {
 	channel := m.Channel()
-	if channel != nil && channel.Type != ChannelTypeNews {
+	if channel != nil && !channel.NewsChannel() {
 		return nil, restclient.NewError(nil, errors.New("channel type is not NEWS"))
 	}
 	return m.Disgo.RestClient().CrosspostMessage(m.ChannelID, m.ID)

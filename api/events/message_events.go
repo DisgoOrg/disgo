@@ -8,12 +8,12 @@ import (
 type GenericMessageEvent struct {
 	*GenericEvent
 	MessageID api.Snowflake
-	Message   *api.Message
 	ChannelID api.Snowflake
+	Message   *api.Message
 }
 
 // MessageChannel returns the api.MessageChannel where the GenericMessageEvent happened
-func (e *GenericMessageEvent) MessageChannel() *api.MessageChannel {
+func (e *GenericMessageEvent) MessageChannel() api.MessageChannel {
 	return e.Disgo().Cache().MessageChannel(e.ChannelID)
 }
 

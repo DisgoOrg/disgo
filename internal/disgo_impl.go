@@ -42,6 +42,8 @@ func New(token string, options api.Options) (api.Disgo, error) {
 
 	disgo.eventManager = newEventManagerImpl(disgo, []api.EventListener{})
 
+	disgo.cache = newCacheImpl(disgo, options.MemberCachePolicy, options.ThreadMemberCachePolicy, options.MessageCachePolicy, options.CacheFlags)
+
 	if options.EnableWebhookInteractions {
 		disgo.webhookServer = newWebhookServerImpl(disgo, options.ListenURL, options.ListenPort, options.PublicKey)
 	}
@@ -218,8 +220,8 @@ func (d *DisgoImpl) CreateCommand(command api.CommandCreate) (*api.Command, rest
 }
 
 // EditCommand edits a specific global api.Command
-func (d *DisgoImpl) EditCommand(commandID api.Snowflake, command api.CommandUpdate) (*api.Command, restclient.RestError) {
-	return d.RestClient().UpdateGlobalCommand(d.ApplicationID(), commandID, command)
+func (d *DisgoImpl) EditCommand(commandID api.Snowflake, commandUpdate api.CommandUpdate) (*api.Command, restclient.RestError) {
+	return d.RestClient().UpdateGlobalCommand(d.ApplicationID(), commandID, commandUpdate)
 }
 
 // DeleteCommand creates a new global api.Command
@@ -248,8 +250,8 @@ func (d *DisgoImpl) CreateGuildCommand(guildID api.Snowflake, command api.Comman
 }
 
 // EditGuildCommand edits a specific api.Guild api.Command
-func (d *DisgoImpl) EditGuildCommand(guildID api.Snowflake, commandID api.Snowflake, command api.CommandUpdate) (*api.Command, restclient.RestError) {
-	return d.RestClient().UpdateGuildCommand(d.ApplicationID(), guildID, commandID, command)
+func (d *DisgoImpl) EditGuildCommand(guildID api.Snowflake, commandID api.Snowflake, commandUpdate api.CommandUpdate) (*api.Command, restclient.RestError) {
+	return d.RestClient().UpdateGuildCommand(d.ApplicationID(), guildID, commandID, commandUpdate)
 }
 
 // DeleteGuildCommand creates a new api.Command for this api.Guild
